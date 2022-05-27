@@ -1,0 +1,140 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:tflite/tflite.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Cek Mata',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const MyHomePage(title: 'Cek Mata'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  late File pickedImage;
+  bool isImageLoaded = false;
+
+  late List _result;
+
+  String _confidence = "";
+  String _name = "";
+
+  String numbers = "";
+
+  getImageFromGallery() async {
+    final tempStore = await ImagePicker().getImage(source: ImageSource.gallery);
+
+    setState(() {
+      pickedImage = File(tempStore!.path);
+      isImageLoaded = true;
+      applyModelOnImage(pickedImage);
+    });
+  }
+
+  loadMyModel() async {
+    print("masuk load");
+    var result = await Tflite.loadModel(
+      model: "assets/model_unquant.tflite",
+      labels: "assets/labels.txt",
+    );
+
+    print("Result : $result");
+  }
+
+  applyModelOnImage(File file) async {
+    var res = await Tflite.runModelOnImage(
+      path: file.path,
+      numResults: 2,
+      threshold: 0.5,
+      imageMean: 127.5,
+      imageStd: 127.5,
+    );
+    print("apply nih");
+    print(res);
+
+    setState(() {
+      _result = res!;
+
+      String str = _result[0]["label"];
+
+      _name = str.substring(2);
+      _confidence = _result != null
+          ? (_result[0]["confidence"] * 100.0).toString().substring(0, 2) + "%"
+          : "";
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadMyModel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Container(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 30,
+            ),
+            isImageLoaded
+                ? Center(
+                    child: Container(
+                    height: 350,
+                    width: 350,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                            image: FileImage(File(pickedImage.path)),
+                            fit: BoxFit.contain)),
+                  ))
+                : Container(),
+            Text("Name : $_name \nConfidence : $_confidence"),
+            Text("\nPenyakit apa itu?"),
+            Text("Glukoma adalah bla bla bla\n\n"),
+            Text("Cara Menangani?"),
+            Text("Bisa dengan ke dokter mata.\n\n"),
+            Text("Dokter terkait"),
+            Text("1. Dokter A"),
+            Text("   No Telp: 0818xxxxx"),
+            Text("2. Dokter B"),
+            Text("   No Telp: 0818xxxxx"),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          getImageFromGallery();
+        },
+        child: const Icon(Icons.photo_album),
+      ),
+    );
+  }
+}
