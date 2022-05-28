@@ -10,7 +10,7 @@ Color blueColor = Color(0x468FD4);
 
 double edge = 24;
 
-TextStyle blackTextStyle = GoogleFonts.poppins(
+TextStyle blackTextStyle = GoogleFonts.lato(
   fontWeight: FontWeight.w500,
   color: blackColor,
 );

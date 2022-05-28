@@ -1,5 +1,4 @@
-0 diabetic
-1 normal
+0 normal
+1 cataract
 2 glaucoma
-3 myopia pathological
-4 cataract
+3 pathological_myopia
